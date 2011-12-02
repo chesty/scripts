@@ -1,0 +1,28 @@
+#!/bin/sh
+
+#apt-get install gvfs-bin nautilus-actions
+
+CMD="false"
+
+if [ -z "$1" ]; then
+	set -- "."
+fi
+
+for arg in "$@"; do
+	if [ -d "${arg}" ]; then
+		cd "${arg}"
+		CMD="ls"
+	elif [ -f "${arg}" ]; then
+		CMD="ls ${arg}"
+	fi
+
+	eval "${CMD}" | while read file; do
+		D=`dirname "${file}"`
+		F=`basename "${file}"|sed 's/^_//'` 
+		N="${D}/${F}"
+		if [ "./${file}" != "${N}" ]; then
+			mv "${file}" "${N}"
+		fi 
+		gvfs-set-attribute -t unset "${N}" metadata::emblems 
+	done
+done
