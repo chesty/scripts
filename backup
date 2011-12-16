@@ -1,0 +1,36 @@
+Here's a quicky backup script using rsync. I would prefer rdiff-backup, but it wasn't an option for me in this case.
+
+#!/bin/bash
+
+SRV="someserverbackup"
+DAY=`date +%a`
+BDIR="/storage/backup"
+BBDIR="${BDIR}/${DAY}/${SRV}"
+
+rm -rf "${BBDIR}"
+
+/usr/bin/rsync -a --delete --numeric-ids --backup --backup-dir="${BBDIR}" \
+	"${SRV}":{/home,/srv,/etc} "${BDIR}/${SRV}"
+
+#end
+
+It gives you 7 days in changed files, ie you can go back in time 7 days.
+it's run once per day via cron as root. 
+
+then in ~/.ssh/config
+
+Host someserverbackup
+        Hostname 192.168.1.1
+        ControlMaster no
+        IdentityFile /root/.ssh/someserverbackup_dsa
+
+An easy way to specify a key, works with rdiff-backup and rsync, etc. Saves having to specify the key on the command line, which is different for different applications.
+
+Then on 192.168.1.1 in /root/.ssh/authorized_keys
+
+from="192.168.1.2",command="/usr/local/bin/rsync-only" ssh-dss AAAA...
+
+where 192.168.1.2 is the host where the back up script runs, and you can google 
+for the rsync-only script, it does just what it says, restricts that key to rsync
+and to the host 192.168.1.2.
+
